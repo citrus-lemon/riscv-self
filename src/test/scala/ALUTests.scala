@@ -30,21 +30,23 @@ class ALUTester(alu: => ALU) extends BasicTester with TestUtils {
       case _ => 0xffffffffL
     }) & ((1L<<32) - 1))
   }
-  alu_A += 0L; alu_B += 0xfece1234L; alu_op += 15; alu_out += 0xfece1234L; // test invaild operator
+  alu_A += 0L; alu_B += 0xfece1234L; alu_op += 15; alu_out += 0xfece1234L // test invaild operator
+  shuffle(alu_A, alu_B, alu_op, alu_out)
+  alu_A += 0L; alu_B += 0xfece1234L; alu_op += 15; alu_out += 0xfece1234L // can not reach last data
 
-  val a = VecInit(alu_A.to[Seq].map(_.U(32.W)))
-  val b = VecInit(alu_B.to[Seq].map(_.U(32.W)))
-  val p = VecInit(alu_op.to[Seq].map(_.U(4.W)))
-  val o = VecInit(alu_out.to[Seq].map(_.U(32.W)))
+  val a = interface(alu_A)
+  val b = interface(alu_B)
+  val p = interface(alu_op, 4)
+  val o = interface(alu_out)
   val (cntr, done) = Counter(true.B, o.size)
   tester.io.A := a(cntr)
   tester.io.B := b(cntr)
   tester.io.alu_op := p(cntr)
 
   when(done) { stop(); stop() }
-  assert(tester.io.out === o(cntr))
   printf("Counter: %d, Op: %d, A: 0x%x, B: 0x%x, Out: %x ?= %x\n",
     cntr, tester.io.alu_op, tester.io.A, tester.io.B, tester.io.out, o(cntr))
+  assert(tester.io.out === o(cntr))
 }
 
 class ALUTests extends FlatSpec {

@@ -13,7 +13,8 @@ class ScalaWriter():
     'const: (name, valuefmt, *fmts)'
     fp = self.fp
     def decorator(func):
-      constlist = func()
+      constlist = list(func())
+      ml = max(map(lambda x:len(x[0]), constlist))
       fp.write("object {} {{\n".format(identity))
       for el in constlist:
         if not el:
@@ -21,7 +22,7 @@ class ScalaWriter():
         elif isinstance(el, str):
           fp.write("  // {}\n".format(el))
         else:
-          fp.write("  val {} = {}\n".format(el[0], el[1].format(*el[2:])))
+          fp.write(("  val {:%d} = {}\n" % ml).format(el[0], el[1].format(*el[2:])))
       fp.write("}\n\n")
     return decorator
   
@@ -37,12 +38,13 @@ class ScalaWriter():
     return decorator
   
   @staticmethod
-  def Seq(identity):
+  def Seq(identity, cls='Seq'):
     def decorator(func):
-      cl = ['val {} = Seq('.format(identity)]
-      tuplelist = func()
+      cl = ['val {} = {}('.format(identity, cls)]
+      tuplelist = list(func())
+      ml = max(map(lambda x:len(x[0]), tuplelist))
       for el in tuplelist:
-        cl.append("  {} -> {},".format(el[0], el[1].format(*el[2:])))
+        cl.append(("  {:%d} -> {}," % ml).format(el[0], el[1].format(*el[2:])))
       cl[-1] = cl[-1][:-1] + ')'
       return lambda: cl
     return decorator

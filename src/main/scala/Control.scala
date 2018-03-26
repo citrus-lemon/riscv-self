@@ -29,7 +29,7 @@ object Control {
     BitPat("b11011") -> List(IMM_J, ACT.JMP),
     BitPat("b11001") -> List(IMM_I, ACT.JMP),
     BitPat("b00101") -> List(IMM_U, ACT.AUI),
-    BitPat("b11011") -> List(IMM_U, ACT.LUI))
+    BitPat("b01101") -> List(IMM_U, ACT.LUI))
 }
 
 class Control extends Module {

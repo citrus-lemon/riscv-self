@@ -6,7 +6,8 @@ object Compile {
   val modules:Map[String, () => chisel3.Module] = Map(
     "RegFile" -> (() => new RegFile()),
     "ALU"     -> (() => new ALU()),
-    "Control" -> (() => new Control())
+    "Control" -> (() => new Control()),
+    "ImmGen"  -> (() => new ImmGen())
   )
 
   def dump(dir:File, mod: () => chisel3.Module) = {
