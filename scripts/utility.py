@@ -5,7 +5,7 @@ class ScalaWriter():
     self.fp = open(filename, 'w')
     self.fp.write("// auto generate by python scripts\n\n")
     self.fp.write("package rself\n\nimport chisel3._\n\n")
-  
+
   def write(self, string):
     self.fp.write(string)
 
@@ -25,7 +25,7 @@ class ScalaWriter():
           fp.write(("  val {:%d} = {}\n" % ml).format(el[0], el[1].format(*el[2:])))
       fp.write("}\n\n")
     return decorator
-  
+
   def namespace(self, identity):
     'create a namespace'
     fp = self.fp
@@ -36,7 +36,7 @@ class ScalaWriter():
         fp.write("  " + el + "\n")
       fp.write("}\n\n")
     return decorator
-  
+
   @staticmethod
   def Seq(identity, cls='Seq'):
     def decorator(func):

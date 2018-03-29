@@ -42,12 +42,12 @@ trait TestUtils {
       ctl_inst += t; ctl_mode += m; ctl_sel += s; ctl_imm += i
     }
     def appendEle(t:Long, m:Long, s:UInt, i:UInt): Unit = append(t, m.toLong, s.litValue().toLong, i.litValue().toLong)
-    // operator `<<' higher than `^' 
+    // operator `<<' higher than `^'
     for (op <- Constants.Opcode; i <- 0 until r) {
       val (opstr, opcode) = op
       import IMM_MODE._
       opstr match {
-        case "LUI" => 
+        case "LUI" =>
           appendEle((opcode ^ randombits(5)<<7 ^ randombits(20)<<12), 0, ACT.LUI, IMM_U)
         case "AUIPC" =>
           appendEle((opcode ^ randombits(5)<<7 ^ randombits(20)<<12), 0, ACT.AUI, IMM_U)

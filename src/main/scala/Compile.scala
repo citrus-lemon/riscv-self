@@ -4,10 +4,14 @@ import java.io.{File, FileWriter}
 
 object Compile {
   val modules:Map[String, () => chisel3.Module] = Map(
-    "RegFile" -> (() => new RegFile()),
-    "ALU"     -> (() => new ALU()),
-    "Control" -> (() => new Control()),
-    "ImmGen"  -> (() => new ImmGen())
+    "RegFile"   -> (() => new RegFile),
+    "ALU"       -> (() => new ALU),
+    "Control"   -> (() => new Control),
+    "ImmGen"    -> (() => new ImmGen),
+    "Branch"    -> (() => new Branch),
+    "LoadStore" -> (() => new LoadStore),
+    "Execute"   -> (() => new Execute),
+    "Datapath"  -> (() => new Datapath)
   )
 
   def dump(dir:File, mod: () => chisel3.Module) = {

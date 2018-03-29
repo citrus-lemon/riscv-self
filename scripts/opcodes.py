@@ -90,14 +90,14 @@ def codeparse(code):
         else:
           valnum = int(val[0])
         args_list.append(('const', r, valnum))
-  
+
   # Check Instruction Type
   index = T(arg_set)
   if index in InstructionType:
     codetype = InstructionType[index]
   else:
     codetype = 'O'
-  
+
   # Check Instruction Vaild
   mask = 0
   constmask = 0
@@ -107,7 +107,7 @@ def codeparse(code):
     if part[0] == 'const':
       constmask ^= (lambda x:(1<<(x[0]+1)) - (1<<x[1]))(part[1])
       const ^= (lambda x, y:y<<x[1])(part[1], part[2])
-  
+
   length = None
   for bit_length in range(4,8):
     if mask ^ ((1<<(1<<bit_length))-1) == 0:
@@ -115,7 +115,7 @@ def codeparse(code):
       break
   if not length:
     raise InvaildInstructionError(sig, bin(mask))
-  
+
   return {
     'name': sig,
     'args': args_list,

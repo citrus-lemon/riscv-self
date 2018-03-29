@@ -23,7 +23,7 @@ class ImmGenTester(img: => ImmGen) extends BasicTester with TestUtils {
     img_inst += inst
     img_mode += modop
     img_val += (modstr match {
-      // operator `<<' higher than `^' 
+      // operator `<<' higher than `^'
       case 'R' => 0
       case 'I' => B(31, 20)
       case 'S' => B(31, 25)<<5 ^ B(11, 7)
