@@ -28,7 +28,7 @@ class ALUTester(alu: => ALU) extends BasicTester with TestUtils {
       case "SRL" => a >> shamt
       case "SRA" => (a.toInt >> shamt).toLong
       case _ => 0xffffffffL
-    }) & ((1L<<32) - 1))
+    }).toUnsigned())
   }
   alu_A += 0L; alu_B += 0xfece1234L; alu_op += 15; alu_out += 0xfece1234L // test invaild operator
   shuffle(alu_A, alu_B, alu_op, alu_out)

@@ -17,6 +17,11 @@ trait TestUtils {
   def randombits(bl: Int) = {rnd.nextLong() & ((1L<<bl)-1)}
   def random32() = randombits(32)
 
+  implicit class SignedLong(me: Long) {
+    def toSigned(b: Int = 32):Long = {val rme = me & ((1L<<b) - 1);if ((me & (1L << (b-1))) == 0) {rme} else {rme - (1L<<b)}}
+    def toUnsigned(b: Int = 32):Long = me & ((1L<<b) - 1)
+  }
+
   def shuffle[T, CC[X] <: scala.collection.mutable.AbstractBuffer[X]](xs: CC[T]*): Unit = {
     val size = xs(0).size
     val index = scala.util.Random.shuffle((0 until size).toList)
