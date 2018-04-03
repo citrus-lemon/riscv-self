@@ -52,12 +52,11 @@ class WriteBack extends Module {
 
   io.reg.waddr := io.rd
   io.reg.wdata := io.data
+  io.reg.wen := io.en
 
   when (io.en) {
-    io.reg.wen := true.B
     io.ready := true.B
   }.otherwise {
-    io.reg.wen := false.B
     io.ready := false.B
   }
 }

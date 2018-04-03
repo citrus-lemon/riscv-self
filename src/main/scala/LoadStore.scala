@@ -5,7 +5,7 @@ import chisel3.util._
 
 class LoadIO extends Bundle {
   val mode = Input(UInt(3.W))
-  val imm  = Input(UInt(32.W))
+  val imm  = Input(UInt(12.W))
   val rs1  = Input(UInt(32.W))
   val en   = Input(Bool())
   val ready = Output(Bool())
@@ -15,7 +15,7 @@ class LoadIO extends Bundle {
 
 class StoreIO extends Bundle {
   val mode = Input(UInt(3.W))
-  val imm  = Input(UInt(32.W))
+  val imm  = Input(UInt(12.W))
   val rs2  = Input(UInt(32.W))
   val rs1  = Input(UInt(32.W))
   val en   = Input(Bool())
@@ -27,7 +27,7 @@ class Load extends Module {
   val io = IO(new LoadIO)
   val enable = Module(new Posedge)
   enable.io.in := io.en
-  enable.io.re := !io.mem.vaild
+  enable.io.re := ~io.mem.vaild
   io.mem.addr := io.rs1 + Utility.extendSign(io.imm)
   io.mem.ren := enable.io.out
   io.ready := io.mem.vaild
@@ -45,7 +45,7 @@ class Store extends Module {
   val io = IO(new StoreIO)
   val enable = Module(new Posedge)
   enable.io.in := io.en
-  enable.io.re := !io.mem.vaild
+  enable.io.re := ~io.mem.vaild
   io.mem.addr := io.rs1 + Utility.extendSign(io.imm)
   io.mem.wen := enable.io.out
   io.mem.data := io.rs2
@@ -71,15 +71,15 @@ class LoadStore extends Module {
   val store = Module(new Store)
   io.rd := Mux(io.mode(3), 0.U(5.W), io.inst(11, 7))
 
-  load.io.imm := io.rs3
+  load.io.imm := io.rs3(11, 0)
   load.io.rs1 := io.rs1
 
-  store.io.imm := io.rs3
+  store.io.imm := io.rs3(11, 0)
   store.io.rs2 := io.rs2
   store.io.rs1 := io.rs1
 
-  load.io.en := Mux(io.mode(3), false.B, io.en)
-  store.io.en := Mux(io.mode(3), io.en, false.B)
+  load.io.en  := (~io.mode(3)) & io.en
+  store.io.en := ( io.mode(3)) & io.en
 
   load.io.mode := io.mode(2, 0)
   store.io.mode := io.mode(2, 0)
