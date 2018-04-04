@@ -7,7 +7,7 @@ import org.scalatest.FlatSpec
 
 class ControlTester(ctl: => Control) extends BasicTester with TestUtils {
   val tester = Module(ctl)
-  val (ctl_inst, ctl_mode, ctl_sel, ctl_imm) = randomInsts()
+  val (ctl_inst, ctl_mode, ctl_sel, ctl_imm) = randomInsts() // TestUtils::randomInsts
   ctl_inst += 127; ctl_mode += 0; ctl_sel += 4; ctl_imm += 6 // invaild instruction
 
   shuffle(ctl_inst, ctl_mode, ctl_sel, ctl_imm)

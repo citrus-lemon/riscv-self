@@ -14,6 +14,7 @@ class ExecuteIO extends Bundle {
   val npc   = Output(UInt(32.W))
   val rd    = Output(UInt(5.W))
   val data  = Output(UInt(32.W))
+  val sys   = Output(Bool())
 
   val mem = Flipped(new MemoryIO)
   val reg = Flipped(new RegFileReaderIO)
@@ -100,6 +101,8 @@ class Execute extends Module {
     ACT.BRC -> brc.io.isJmp,
     ACT.JMP -> true.B,
     ACT.AUI -> true.B))
+
+  io.sys := ctrl.io.sel === ACT.SYS
 
   io.ready := MuxLookup(ctrl.io.sel, true.B, Seq(
     ACT.LDS -> lds.io.ready))

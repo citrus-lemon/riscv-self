@@ -16,22 +16,9 @@ class ImmGenTester(img: => ImmGen) extends BasicTester with TestUtils {
   for (mod <- Constants.ImmModes; i <- 0 until 15) {
     val (modstr, modop) = mod
     val inst = random32()
-    def B(hi: Int, lo: Int = -1) = {
-      val low = if (lo == -1) {hi} else {lo}
-      (inst & ((1<<(hi+1)) - (1<<low))) >> low
-    }
     img_inst += inst
     img_mode += modop
-    img_val += (modstr match {
-      // operator `<<' higher than `^'
-      case 'R' => 0
-      case 'I' => B(31, 20)
-      case 'S' => B(31, 25)<<5 ^ B(11, 7)
-      case 'B' => B(31)<<12 ^ B(7)<<11 ^ B(30, 25)<<5 ^ B(11, 8)<<1
-      case 'J' => B(31)<<20 ^ B(19, 12)<<12 ^ B(20)<<11 ^ B(30, 21)<<1
-      case 'U' => B(31, 12)<<12
-      case  _  => 0
-    })
+    img_val += immData(inst, modstr) // TestUtils::immData
   }
 
   shuffle(img_inst, img_mode, img_val)

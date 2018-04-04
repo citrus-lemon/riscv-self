@@ -8,6 +8,10 @@ object Const {
   val PC_EVEC  = 0x100
 }
 
+object Instruction {
+  def NOP = BitPat.bitPatToUInt(BitPat("b00000000000000000000000000010011"))
+}
+
 class InstructionReader extends Module {
   val io = IO(new Bundle {
     val en    = Input(Bool())
@@ -23,6 +27,7 @@ class InstructionReader extends Module {
   })
   val pc  = RegInit(Const.PC_START.U(32.W))
   val npc = pc + 4.U
+  val inst = RegInit(Instruction.NOP)
   val enable = Module(new Posedge)
 
   enable.io.in := io.en
@@ -33,9 +38,15 @@ class InstructionReader extends Module {
     pc := Mux(io.isJmp, io.jaddr, npc)
   }
 
+  when (io.mem.vaild) {
+    inst := io.mem.data
+    io.ready := true.B
+  } .otherwise {
+    io.ready := false.B
+  }
+
   io.mem.addr := pc
-  io.inst := io.mem.data
-  io.ready := io.mem.vaild
+  io.inst := inst
   io.pc := pc
 }
 

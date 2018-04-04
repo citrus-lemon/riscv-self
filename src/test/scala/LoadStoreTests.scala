@@ -202,7 +202,7 @@ class StoreTester(ls: => LoadStore) extends LoadStoreTester(ls)(StoreTest)
 
 class LoadStoreTests extends FlatSpec {
   "Posedge" should "pass" in {
-    // assert(TesterDriver execute (() => new PosedgeTester(new Posedge)))
+    assert(TesterDriver execute (() => new PosedgeTester(new Posedge)))
   }
   "Load" should "pass" in {
     assert(TesterDriver execute (() => new LoadTester(new LoadStore)))

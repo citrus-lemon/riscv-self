@@ -38,14 +38,7 @@ class BranchTester(brc: => Branch) extends BasicTester with TestUtils {
     val jpc = (cpc + rdisp.toSigned(13)).toUnsigned()
     pc += cpc; addr += jpc
 
-    isJm += (if (fn match {
-      case "BEQ" => rrs._1 == rrs._2
-      case "BNE" => rrs._1 != rrs._2
-      case "BLT" => rrs._1.toInt < rrs._2.toInt
-      case "BGE" => rrs._1.toInt >= rrs._2.toInt
-      case "BLTU" => rrs._1 < rrs._2
-      case "BGEU" => rrs._1 >= rrs._2
-    }) {1L} else {0L})
+    isJm += branchCond(fn, rrs) // TestUtils::branchCond
   }
   shuffle(rs1, rs2, jmty, disp, pc, isJm, addr)
   rs1 += 0; rs2 += 0; jmty += BR_TYPE.BR_EQ.litValue().toLong; disp += 0; pc += 0; isJm += 1; addr += 0 // unreachable test

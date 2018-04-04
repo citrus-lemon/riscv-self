@@ -49,7 +49,7 @@ def ControlActs():
 def ImmModes():
   modes = 'RISUJBZ'
   fmt = '{}L'
-  return [("'" + modes[i] + "'", fmt, i) for i in range(len(modes))]
+  return [('"' + modes[i] + '"', fmt, i) for i in range(len(modes))]
 
 @namespace('Constants')
 def constant():

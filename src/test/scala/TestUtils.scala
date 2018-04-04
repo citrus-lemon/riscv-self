@@ -5,12 +5,14 @@ import chisel3._
 trait TestUtils {
   val rnd = new scala.util.Random(System.currentTimeMillis)
 
+  type TestList = scala.collection.mutable.ListBuffer[Long]
   object TestList {
     import scala.collection.mutable.ListBuffer
     def apply(): ListBuffer[Long] = {
       val ref: ListBuffer[Long] = ListBuffer()
       ref
     }
+    def List4() = (TestList(), TestList(), TestList(), TestList())
   }
   import scala.collection.mutable.ListBuffer
 
@@ -33,11 +35,13 @@ trait TestUtils {
     }
   }
 
-  def interface(l: ListBuffer[Long], bits: Int = 32) = {
+  def interface(l: scala.collection.Iterable[Long], bits: Int = 32) = {
     VecInit(l.to[Seq].map(_.U(bits.W)))
   }
 
-  def randomInsts(r: Int = 5): Tuple4[ListBuffer[Long], ListBuffer[Long], ListBuffer[Long], ListBuffer[Long]] = {
+  type List4 = Tuple4[ListBuffer[Long], ListBuffer[Long], ListBuffer[Long], ListBuffer[Long]]
+
+  def randomInsts(r: Int = 5): List4 = {
     val ctl_inst = TestList()
     val ctl_mode = TestList()
     val ctl_sel  = TestList()
@@ -124,4 +128,49 @@ trait TestUtils {
     }
     return (ctl_inst, ctl_mode, ctl_sel, ctl_imm)
   }
+
+  def immData(inst: Long, mode: String): Long = {
+    def B(hi: Int, lo: Int = -1) = {
+      val low = if (lo == -1) {hi} else {lo}
+      (inst & ((1<<(hi+1)) - (1<<low))) >> low
+    }
+    return (mode match {
+      // operator `<<' higher than `^'
+      case "R" => 0
+      case "I" => B(31, 20)
+      case "S" => B(31, 25)<<5 ^ B(11, 7)
+      case "B" => B(31)<<12 ^ B(7)<<11 ^ B(30, 25)<<5 ^ B(11, 8)<<1
+      case "J" => B(31)<<20 ^ B(19, 12)<<12 ^ B(20)<<11 ^ B(30, 21)<<1
+      case "U" => B(31, 12)<<12
+      case "Z" => 0
+      case  _  => 0
+    })
+  }
+
+  def calculate(a: Long, b: Long, mod: Long): Long = {
+    val shamt = b % (1<<5)
+    val opstr = Constants.ALU.toMap.map(_.swap).get(mod).get
+    return (opstr match {
+      case "ADD" => a + b
+      case "SUB" => a - b
+      case "XOR" => a ^ b
+      case "AND" => a & b
+      case "OR"  => a | b
+      case "SLT" => if (a.toInt < b.toInt) {1L} else {0L}
+      case "SLTU"=> if (a < b) {1L} else {0L}
+      case "SLL" => a << shamt
+      case "SRL" => a >> shamt
+      case "SRA" => (a.toInt >> shamt).toLong
+      case _ => 0xffffffffL
+    }).toUnsigned()
+  }
+
+  def branchCond(fn: String, rrs: Tuple2[Long, Long]): Long = (if (fn match {
+    case "BEQ" => rrs._1 == rrs._2
+    case "BNE" => rrs._1 != rrs._2
+    case "BLT" => rrs._1.toInt < rrs._2.toInt
+    case "BGE" => rrs._1.toInt >= rrs._2.toInt
+    case "BLTU" => rrs._1 < rrs._2
+    case "BGEU" => rrs._1 >= rrs._2
+  }) {1L} else {0L})
 }
