@@ -17,21 +17,13 @@ class PosedgeTester(p: => Posedge) extends BasicTester with TestUtils {
   val res = TestList()
   val out = TestList()
   for (i <- 0 until 100) {
-    ser += 1
-    res += 1
-    out += 1
+    ser += 1; res += 1; out += 1
     for (j <- 0L until randombits(3)) {
-      ser += 0
-      res += 1
-      out += 1
+      ser += 0; res += 1; out += 1
     }
-    res += 0
-    ser += 0
-    out += 0
+    res += 0; ser += 0; out += 0
     for (j <- 0L until randombits(2)) {
-      ser += 0
-      res += 1
-      out += 0
+      ser += 0; res += 1; out += 0
     }
   }
 
@@ -46,11 +38,14 @@ class PosedgeTester(p: => Posedge) extends BasicTester with TestUtils {
   // printf("%d ", tester.io.out)
 }
 
-abstract class LoadStoreTester extends BasicTester with TestUtils {
-
+object LoadStoreTesterProperty {
+  type LoadStoreTesterProperty = Int
+  val LoadTest  = 0
+  val StoreTest = 1
 }
+import LoadStoreTesterProperty._
 
-class LoadTester(ls: => LoadStore) extends LoadStoreTester {
+abstract class LoadStoreTester(ls: => LoadStore)(implicit property: LoadStoreTesterProperty) extends BasicTester with TestUtils {
   val tester = Module(ls)
 
   val _time = TestList()
@@ -61,17 +56,32 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
   val _rd   = TestList()
   val _cal  = TestList()
   val _mem  = TestList()
+  val _ret  = TestList()
 
   for (i <- 0 until 100) {
     val r = (random32(), randombits(12))
     _time += randombits(3)
-    _mode += 2
-    _rd  += randombits(5)
-    _rs2 += 0
     _rs1 += r._1
     _imm += r._2
     _cal += (r._1 + r._2.toSigned(12)).toUnsigned()
-    _mem += random32()
+    val rmem = random32()
+    _mem += rmem
+    val mod    = rnd.nextInt(3)
+    property match {
+      case LoadTest  => {
+        val signed = randombits(1)
+        _mode += (0 << 3) + (signed << 2) + mod
+        _rd  += randombits(5)
+        _rs2 += 0
+        _ret += (if (signed == 1) rmem.toSigned(1 << (3+mod)) else rmem.toUnsigned(1 << (3+mod))).toUnsigned()
+      }
+      case StoreTest => {
+        _mode += (1 << 3) + mod
+        _rd  += 0
+        _rs2 += random32()
+        _ret += 0
+      }
+    }
   }
 
   val time = interface(_time, 8)
@@ -83,6 +93,8 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
   val inst = interface(_rd map (x => x<<7))
 
   val mem = interface(_mem)
+  val ret = interface(_ret)
+  val pos = interface(_cal)
 
   val counter     = RegInit(0.U(16.W))
   val timecounter = RegInit(0.U(8.W))
@@ -93,7 +105,6 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
   // tester.io.mem.writer.mode := DontCare
   // tester.io.mem.writer.wen  := DontCare
   // tester.io.mem.writer.data := DontCare
-  tester.io.mem.writer.vaild := false.B
 
   tester.io.mode := mode(counter)
   tester.io.inst := inst(counter)
@@ -101,15 +112,27 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
   tester.io.rs2  := rs2(counter)
   tester.io.rs1  := rs1(counter)
 
-  val vaild = RegInit(false.B)
-  val rdata = RegInit(0.U(32.W))
-  val enabl = RegInit(false.B)
-  val nowmem = RegInit(0.U(32.W))
+  val vaild = WireInit(false.B)
+  val rdata = WireInit(0.U(32.W))
+  val enabl = WireInit(false.B)
 
+  val retmem = Wire(UInt(32.W))
+  val nowmem = Wire(UInt(32.W))
+  retmem := ret(counter)
   nowmem := mem(counter)
 
-  tester.io.mem.reader.vaild := vaild
-  tester.io.mem.reader.data  := rdata
+  property match {
+    case LoadTest  => {
+      tester.io.mem.writer.vaild := false.B
+      tester.io.mem.reader.vaild := vaild
+      tester.io.mem.reader.data  := rdata
+    }
+    case StoreTest => {
+      tester.io.mem.reader.vaild := false.B
+      tester.io.mem.writer.vaild := vaild
+      tester.io.mem.reader.data  := 0.U
+    }
+  }
   tester.io.en := enabl
 
   val stopper = RegInit(0.U(16.W))
@@ -118,27 +141,17 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
 
   when (counter >= time.size.U) { stop(); stop() }
 
-  when (tester.io.mem.reader.ren) {
-    timecounter := timecounter + 1.U
-    printf("Counter: %d, TimeCounter: %d\n", counter, timecounter)
-  } .otherwise {
-    timecounter := 0.U
-  }
-
   when (timecounter >= time(counter)) {
     vaild := true.B
     rdata  := mem(counter)
     printf("Counter: %d, TimeReturn, Wait: %d ?= %d\n",
       counter, timecounter, time(counter))
-    assert(timecounter === time(counter))
-    timecounter := 0.U
-    counter := counter + 1.U
   } .otherwise {
     vaild := false.B
   }
 
   when ((timecounter === 0.U) && (time(counter) =/= 0.U)) {
-    printf("Counter: %d, Enable, Wait: %d, rs3: %x, rs2: %x, rs1: %x  =>  rd: %d\n",
+    printf("Counter: %d, Enable,     Wait: %d, rs3: %x, rs2: %x, rs1: %x  =>  rd: %d\n",
       counter, time(counter), rs3(counter), rs2(counter), rs1(counter), rd(counter))
     enabl := true.B
   } .elsewhen (time(counter) === 0.U) {
@@ -149,24 +162,52 @@ class LoadTester(ls: => LoadStore) extends LoadStoreTester {
     enabl := false.B
   }
 
+  when (tester.io.mem.reader.ren || tester.io.mem.writer.wen) {
+    timecounter := timecounter + 1.U
+    when (tester.io.mem.reader.ren) {
+      printf("Counter: %d, TimeCounter: %d, Addr: %x ?= %x\n", counter, timecounter, tester.io.mem.reader.addr, pos(counter))
+      assert(tester.io.mem.reader.addr === pos(counter))
+    } .elsewhen (tester.io.mem.writer.wen) {
+      printf("Counter: %d, TimeCounter: %d, Addr: %x ?= %x, Data: %x ?= %x\n",
+        counter, timecounter, tester.io.mem.writer.addr, pos(counter), tester.io.mem.writer.data, rs2(counter))
+      assert(tester.io.mem.writer.addr === pos(counter))
+      assert(tester.io.mem.writer.data === rs2(counter))
+    }
+  } .otherwise {
+    timecounter := 0.U
+  }
+
   when (tester.io.ready) {
-    printf("Counter: %d, Ready, Data: %x ?= %x\n", counter, tester.io.ret, nowmem)
-    assert(nowmem === tester.io.ret)
+    when (~tester.io.mode(3)) {
+      // Load Ready
+      printf("Counter: %d, Load Ready, Mod: %d %d, Data: %x ?= %x(%x)\n",
+        counter, tester.io.mode(2), tester.io.mode(1, 0), tester.io.ret, retmem, nowmem)
+      assert(timecounter === time(counter))
+      assert(retmem === tester.io.ret)
+      assert(tester.io.rd === rd(counter))
+    } .otherwise {
+      printf("Counter: %d, StoreReady, Mod: %d\n",
+        counter, tester.io.mode(2, 0))
+      assert(timecounter === time(counter))
+      assert(tester.io.mem.writer.mode === tester.io.mode(1, 0))
+      assert(tester.io.rd === 0.U)
+    }
+    counter := counter + 1.U
   }
 }
 
-class StoreTester(ls: => LoadStore) extends LoadStoreTester {
+class LoadTester (ls: => LoadStore) extends LoadStoreTester(ls)(LoadTest)
 
-}
+class StoreTester(ls: => LoadStore) extends LoadStoreTester(ls)(StoreTest)
 
 class LoadStoreTests extends FlatSpec {
   "Posedge" should "pass" in {
-    assert(TesterDriver execute (() => new PosedgeTester(new Posedge)))
+    // assert(TesterDriver execute (() => new PosedgeTester(new Posedge)))
   }
   "Load" should "pass" in {
     assert(TesterDriver execute (() => new LoadTester(new LoadStore)))
   }
   "Store" should "pass" in {
-    // assert(TesterDriver execute (() => new StoreTester(new LoadStore)))
+    assert(TesterDriver execute (() => new StoreTester(new LoadStore)))
   }
 }
