@@ -75,6 +75,7 @@ class WriteBack extends Module {
 class DatapathIO extends Bundle {
   val dmem = Flipped(new MemoryIO)
   val imem = Flipped(new MemoryReaderIO)
+  val sys  = Output(Bool())
 }
 
 class Datapath extends Module {
@@ -97,6 +98,8 @@ class Datapath extends Module {
   inr.io.mem <> io.imem
   exe.io.reg <> reg.io.reader
   wrb.io.reg <> reg.io.writer
+
+  io.sys := exe.io.sys
 
   when (wrb.io.ready | reset.toBool) {
     inr.io.en := true.B

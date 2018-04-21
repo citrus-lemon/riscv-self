@@ -31,13 +31,13 @@ class BrCond extends Module {
   val ge   = !lt
   val geu  = !ltu
 
-  io.isJmp :=
-    ((io.cond.br_type === BR_EQ) && eq) ||
-    ((io.cond.br_type === BR_NE) && neq) ||
-    ((io.cond.br_type === BR_LT) && lt) ||
-    ((io.cond.br_type === BR_GE) && ge) ||
-    ((io.cond.br_type === BR_LTU) && ltu) ||
-    ((io.cond.br_type === BR_GEU) && geu)
+  io.isJmp := MuxLookup(io.cond.br_type, false.B, Seq(
+    BR_EQ  -> eq,
+    BR_NE  -> neq,
+    BR_LT  -> lt,
+    BR_GE  -> ge,
+    BR_LTU -> ltu,
+    BR_GEU -> geu))
 }
 
 class BrJump extends Module {
@@ -60,6 +60,6 @@ class Branch extends Module {
   modCond.io.cond := io.cond
   modJump.io.jmp := io.jump
 
-  io.isJmp := modCond.io.isJmp
+  io.isJmp   := modCond.io.isJmp
   io.jmpAddr := modJump.io.jmpAddr
 }

@@ -38,7 +38,7 @@ class ScalaWriter():
     return decorator
 
   @staticmethod
-  def Seq(identity, cls='Seq'):
+  def Seq(identity, cls='Map'):
     def decorator(func):
       cl = ['val {} = {}('.format(identity, cls)]
       tuplelist = list(func())

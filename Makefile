@@ -38,3 +38,5 @@ $(base_dir)/src/main/scala/Constants.scala: $(wildcard $(base_dir)/scripts/{cons
 
 clean:
 	rm -rf $(gen_dir) $(test_dir) $(base_dir)/src/test/scala/Constants.scala $(base_dir)/src/main/scala/Constants.scala
+archive:
+	git archive --format=zip -o riscv-self.zip master

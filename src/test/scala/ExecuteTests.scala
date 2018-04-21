@@ -11,10 +11,9 @@ trait ExecuteUtils extends TestUtils {
     val (inst, mode, sel, imm) = cs
     val (data, rd, npc, jmp) = TestList.List4()
     val size = inst.size
-    def RMap(s: Seq[Tuple2[String, Long]]) = s.toMap.map(_.swap)
     import Constants._
-    val Act = RMap(ControlActs)
-    val Imm = RMap(ImmModes)
+    val Act = ControlActs.map(_.swap)
+    val Imm = ImmModes.map(_.swap)
     for (i <- 0 until size) {
       def B(hi: Int, lo: Int = -1) = {
         val low = if (lo == -1) {hi} else {lo}
