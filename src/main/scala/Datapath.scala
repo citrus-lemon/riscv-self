@@ -34,7 +34,9 @@ class InstructionReader extends Module {
   enable.io.re := !io.mem.vaild
   io.mem.ren := enable.io.out
 
-  when (io.en) {
+  when (reset.toBool) {
+    pc := Const.PC_START.U(32.W)
+  } .elsewhen (io.en) {
     pc := Mux(io.isJmp, io.jaddr, npc)
   }
 
@@ -101,7 +103,7 @@ class Datapath extends Module {
 
   io.sys := exe.io.sys
 
-  when (wrb.io.ready | reset.toBool) {
+  when (~reset.toBool & wrb.io.ready) {
     inr.io.en := true.B
   }.otherwise {
     inr.io.en := false.B

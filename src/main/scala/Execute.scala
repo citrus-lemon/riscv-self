@@ -66,7 +66,7 @@ class Execute extends Module {
 
   lds.io.inst := io.inst
   lds.io.mode := mode
-  lds.io.en   := io.en
+  lds.io.en   := io.en & (ctrl.io.sel === ACT.LDS)
   lds.io.rs3  := imm
   lds.io.rs2  := rs2
   lds.io.rs1  := rs1
@@ -104,7 +104,7 @@ class Execute extends Module {
 
   io.sys := ctrl.io.sel === ACT.SYS
 
-  io.ready := MuxLookup(ctrl.io.sel, true.B, Seq(
+  io.ready := MuxLookup(ctrl.io.sel, io.en, Seq(
     ACT.LDS -> lds.io.ready))
 
 }
