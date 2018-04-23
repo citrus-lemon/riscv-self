@@ -54,6 +54,7 @@ object TestBinary {
 
 class TestBinary(name: String, bin: Seq[Long], result: Long) {
   def name(): String = name
+  def binary(): Seq[Long] = bin
   def vec() = {
     import PesudoAssemblyTools._
     val newbin = bin ++ Seq(
@@ -102,7 +103,7 @@ class DatapathTester(dp: => Datapath, bin: TestBinary) extends BasicTester with 
     mem(wiaddr + 3.U) := data(31, 24)
     when(done) { runState := true.B }
   } .otherwise {
-    when (tester.io.imem.ren | tester.io.imem.vaild) {
+    when (tester.io.imem.ren & tester.io.imem.vaild) {
       printf("INS[%x] ==> %x, iaddr: %x\n", iaddr, Cat(mem(iaddr+3.U), mem(iaddr+2.U), mem(iaddr+1.U), mem(iaddr)), iaddr)
     }
     when (tester.io.dmem.writer.wen) {
@@ -145,6 +146,7 @@ class DatapathTester(dp: => Datapath, bin: TestBinary) extends BasicTester with 
       readVaild := false.B
     }
     when(tester.io.sys) {
+      printf("RESULT %x ?= %x\n", Cat(mem(3), mem(2), mem(1), mem(0)), result)
       assert(Cat(mem(3), mem(2), mem(1), mem(0)) === result)
       stop(); stop()
     }
@@ -171,14 +173,27 @@ object TestBinaryBundles {
     RTYPE("XOR", 1, 3, 0)       // r1(ret) = r3
   ), 5050)
 
+  val writeback = TestBinary("Write-Back", Seq(
+    RTYPE("XOR", 2, 0, 0),
+    ITYPE("ADD", 2, 2, 1),
+    ITYPE("ADD", 2, 2, 2),
+    ITYPE("ADD", 2, 2, 3),
+    ITYPE("ADD", 2, 2, 4),
+    RTYPE("XOR", 1, 2, 0)
+  ), 10)
+
   val collection = Array(
-    first, hundredsum
+    first, writeback, hundredsum
   )
 }
 
 class DatapathTests extends FlatSpec {
   TestBinaryBundles.collection foreach { test =>
     "DataPath" should s"pass ${test.name}" in {
+      // Console.print(s"${test.name}:\n")
+      // test.binary foreach { e =>
+      //   Console.printf ("  %08x\n", e)
+      // }
       assert(TesterDriver execute (() => new DatapathTester(new Datapath, test)))
     }
   }

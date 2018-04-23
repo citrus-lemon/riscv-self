@@ -26,23 +26,27 @@ class InstructionReader extends Module {
     val mem = Flipped(new MemoryReaderIO)
   })
   val pc  = RegInit(Const.PC_START.U(32.W))
-  val npc = pc + 4.U
+  val npc = RegInit(Const.PC_START.U(32.W))
   val inst = RegInit(Instruction.NOP)
-  val enable = Module(new Posedge)
 
-  enable.io.in := io.en
-  enable.io.re := !io.mem.vaild
-  io.mem.ren := enable.io.out
+  val vaild = RegInit(false.B)
+
+  val posedgeState = RegInit(false.B)
+  io.mem.ren := io.en | posedgeState
+  posedgeState := (io.en | posedgeState) & ~io.mem.vaild
 
   when (reset.toBool) {
     pc := Const.PC_START.U(32.W)
   } .elsewhen (io.en) {
     pc := Mux(io.isJmp, io.jaddr, npc)
+    vaild := false.B
   }
 
-  when (io.mem.vaild) {
+  when (io.mem.vaild & ~vaild) {
     inst := io.mem.data
     io.ready := true.B
+    npc := pc + 4.U
+    vaild := true.B
   } .otherwise {
     io.ready := false.B
   }
@@ -103,22 +107,25 @@ class Datapath extends Module {
 
   io.sys := exe.io.sys
 
-  when (~reset.toBool & wrb.io.ready) {
-    inr.io.en := true.B
-  }.otherwise {
-    inr.io.en := false.B
-  }
+  val inrEnable = RegInit(true.B)
+  val exeEnable = RegInit(false.B)
+  val wrbEnable = RegInit(false.B)
 
-  when (inr.io.ready) {
-    exe.io.en := true.B
-  }.otherwise {
-    exe.io.en := false.B
-  }
+  val mods = Array(
+    inr.io.en -> inr.io.ready,
+    exe.io.en -> exe.io.ready,
+    wrb.io.en -> wrb.io.ready
+  )
 
-  when (exe.io.ready) {
-    wrb.io.en := true.B
-  }.otherwise {
-    wrb.io.en := false.B
-  }
+  val enReg = mods.indices map { i => RegInit((i == 0).B) }
+  val rdReg = mods.indices map { i => RegInit(false.B) }
 
+  val modsize = mods.size
+
+  mods.zipWithIndex foreach { module =>
+    val ((en, ready), index) = module
+    en := enReg(index)
+    rdReg(index) := ready
+    enReg((index+1) % modsize) := ready & ~rdReg(index)
+  }
 }
