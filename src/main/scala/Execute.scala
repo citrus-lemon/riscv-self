@@ -50,7 +50,9 @@ class Execute extends Module {
   val mode = ctrl.io.mode
 
   alu.io.A := rs1
-  alu.io.B := Mux(ctrl.io.imm === IMM_MODE.IMM_R, rs2, imm)
+  alu.io.B := Mux(ctrl.io.imm === IMM_MODE.IMM_R,
+    rs2,
+    Utility.extendSign(imm(11, 0)))
   alu.io.alu_op := mode
 
   brc.io.cond.rs1     := rs1

@@ -32,7 +32,7 @@ class Load extends Module {
   io.mem.ren := enable.io.out
   io.ready := io.mem.vaild
 
-  def UNS(i: Int):UInt = Mux(io.mode(2), Utility.extendSign(io.mem.data(i-1, 0), 32), io.mem.data(i-1, 0))
+  def UNS(i: Int):UInt = Mux(~io.mode(2), Utility.extendSign(io.mem.data(i-1, 0), 32), io.mem.data(i-1, 0))
 
   io.data := MuxLookup(io.mode(1, 0), 0.U(32.W), Seq(
     0.U(2.W) -> UNS(8),

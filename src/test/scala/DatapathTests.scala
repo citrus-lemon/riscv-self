@@ -183,7 +183,18 @@ object TestBinaryBundles {
   ), 10)
 
   val collection = Array(
-    first, writeback, hundredsum
+    first, writeback,
+    TestBinary("Load-Store", Seq(
+      RTYPE("XOR", 4, 0, 0),       // r4 = 0
+      ITYPE("XOR", 2, 0, -1),      // r2 = 0xffffffff
+      STORE("SW",  2, 0, 0),       // SW x2, 0(0)
+      LOAD( "LBU",  3, 0, 0),       // LB x3, 0(0)
+      ITYPE("SLL", 4, 4, 1),       // r4 <<= 1
+      ITYPE("XOR", 5, 0, 0xff),    // r5 = 0xff
+      BRC(  "BEQ", 3, 5, (2L<<2)), // jump next code if r3 == r5
+      ITYPE("ADD", 4, 4, 1)        // r4 += 1
+    ), 0),
+    hundredsum
   )
 }
 

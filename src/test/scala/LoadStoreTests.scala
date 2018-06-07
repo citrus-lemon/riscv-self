@@ -73,7 +73,7 @@ abstract class LoadStoreTester(ls: => LoadStore)(implicit property: LoadStoreTes
         _mode += (0 << 3) + (signed << 2) + mod
         _rd  += randombits(5)
         _rs2 += 0
-        _ret += (if (signed == 1) rmem.toSigned(1 << (3+mod)) else rmem.toUnsigned(1 << (3+mod))).toUnsigned()
+        _ret += (if (signed == 0) rmem.toSigned(1 << (3+mod)) else rmem.toUnsigned(1 << (3+mod))).toUnsigned()
       }
       case StoreTest => {
         _mode += (1 << 3) + mod
