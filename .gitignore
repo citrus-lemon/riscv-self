@@ -3,3 +3,7 @@ target
 /test_run_dir
 /.idea
 riscv-self.zip
+.bloop
+.metals
+/project/project
+/project/metals.sbt
