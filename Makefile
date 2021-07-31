@@ -27,16 +27,15 @@ test-%: $(base_dir)/src/test/scala/Constants.scala $(base_dir)/src/main/scala/Co
 	$(SH) $(base_dir)/scripts/link_latest.sh $(patsubst test-%,%,$@)Tester
 
 constants:
-	$(PYTHON) $(base_dir)/scripts/testconst.py
-	$(PYTHON) $(base_dir)/scripts/constants.py
+	@echo "make constants is not available for now"
 
 $(base_dir)/src/test/scala/Constants.scala: $(wildcard $(base_dir)/scripts/{testconst,opcodes,utility}.py)
-	$(PYTHON) $(base_dir)/scripts/testconst.py
+	@echo "skip making constants..."
 
 $(base_dir)/src/main/scala/Constants.scala: $(wildcard $(base_dir)/scripts/{constants,opcodes,utility}.py)
-	$(PYTHON) $(base_dir)/scripts/constants.py
+	@echo "skip making constants..."
 
 clean:
-	rm -rf $(gen_dir) $(test_dir) $(base_dir)/src/test/scala/Constants.scala $(base_dir)/src/main/scala/Constants.scala
+	rm -rf $(gen_dir) $(test_dir)
 archive:
 	git archive --format=zip -o riscv-self.zip master

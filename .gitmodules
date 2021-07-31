@@ -1,6 +1,3 @@
-[submodule "opcodes"]
-	path = opcodes
-	url = https://github.com/riscv/riscv-opcodes
 [submodule "scripts/vcd_dumper"]
 	path = scripts/wavedump
 	url = https://github.com/WindProphet/VerilogVCD-Dumper

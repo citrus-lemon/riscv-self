@@ -7,7 +7,7 @@ my own project by lihanyuan (lihanyuan1996@gmail.com)
 ## Install
 
 ```bash
-git clone --recursive https://github.com/WindProphet/riscv-self
+git clone https://github.com/WindProphet/riscv-self
 ```
 
 ## Prerequisite
