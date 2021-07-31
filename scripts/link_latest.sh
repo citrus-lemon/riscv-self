@@ -1,18 +1,20 @@
 #!/bin/bash
+
+function link_testfile {
+  latest="$(ls -1 -t test_run_dir/"$1" | sed /Latest/d | head -n 1)"
+  echo ln -sf ./"$latest" test_run_dir/"$1"/Latest
+  rm -rf test_run_dir/"$1"/Latest
+  rm -f  test_run_dir/"$1"/Latest.vcd
+  ln -sf ./"$latest" test_run_dir/"$1"/Latest
+  cp -f  test_run_dir/"$1"/"$latest"/dump.vcd test_run_dir/"$1"/Latest.vcd
+}
+
 if test -n "$1" -a -d "$(pwd)/test_run_dir/$1"
 then
-  echo ln -sf $(pwd)/test_run_dir/$1/$(ls -1 -t test_run_dir/$1 | sed /Latest/d | head -n 1) $(pwd)/test_run_dir/$1/Latest
-  rm -rf $(pwd)/test_run_dir/$1/Latest
-  rm -f  $(pwd)/test_run_dir/$1/Latest.vcd
-  ln -sf $(pwd)/test_run_dir/$1/$(ls -1 -t test_run_dir/$1 | sed /Latest/d | head -n 1) $(pwd)/test_run_dir/$1/Latest
-  cp -f  $(pwd)/test_run_dir/$1/$(ls -1 -t test_run_dir/$1 | sed /Latest/d | head -n 1)/dump.vcd $(pwd)/test_run_dir/$1/Latest.vcd
+  link_testfile "$1"
 else
-  for i in $(ls test_run_dir)
+  for i in test_run_dir/*/
   do
-    echo ln -sf $(pwd)/test_run_dir/$i/$(ls -1 -t test_run_dir/$i | sed /Latest/d | head -n 1) $(pwd)/test_run_dir/$i/Latest
-    rm -rf $(pwd)/test_run_dir/$i/Latest
-    rm -f  $(pwd)/test_run_dir/$i/Latest.vcd
-    ln -sf $(pwd)/test_run_dir/$i/$(ls -1 -t test_run_dir/$i | sed /Latest/d | head -n 1) $(pwd)/test_run_dir/$i/Latest
-    cp -f  $(pwd)/test_run_dir/$i/$(ls -1 -t test_run_dir/$i | sed /Latest/d | head -n 1)/dump.vcd $(pwd)/test_run_dir/$i/Latest.vcd
+    link_testfile "$(basename "$i")"
   done
 fi
